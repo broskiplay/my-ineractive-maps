@@ -5,33 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="./stellar-blade-map/avatar-favicon.png">
 <title>Интерактивные карты от BroskiPlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&display=swap" rel="stylesheet">
 <!-- Подключение Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <style>
+:root {
+    --page: #090c12;
+    --panel: #151a22;
+    --panel-raised: #1b222c;
+    --line: #303945;
+    --text: #edf2f7;
+    --muted: #9aa8b8;
+    --acid: #c7ff3f;
+    --cyan: #54dcff;
+    --violet: #c084ff;
+    --orange: #ff9c45;
+    --red: #ff6274;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 body {
     min-height: 100vh;
-    background:
-        radial-gradient(ellipse at 50% -20%, rgba(80, 227, 194, .13), transparent 46%),
-        radial-gradient(circle at center, #1e2638 0%, #0f131d 100%);
-    color: #e0e6ed;
+    background: linear-gradient(125deg, #090c12 0%, #111720 48%, #0b0f15 100%);
+    color: var(--text);
     padding: 64px 24px;
+    isolation: isolate;
+}
+body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(rgba(147, 168, 188, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(147, 168, 188, .035) 1px, transparent 1px);
+    background-size: 34px 34px;
 }
 .site-shell {
     width: min(100%, 1080px);
     margin: 0 auto;
+    position: relative;
 }
 .hero { text-align: center; margin-bottom: 30px; }
 .eyebrow {
-    color: #50e3c2; font-size: 12px; font-weight: 800; letter-spacing: 2px;
+    color: var(--acid); font-size: 12px; font-weight: 800; letter-spacing: 0;
     text-transform: uppercase; margin-bottom: 12px;
 }
 .home-title {
-    font-size: clamp(28px, 4vw, 46px); font-weight: 800; color: #f4f8fc;
-    letter-spacing: -1.2px; text-align: center; margin-bottom: 12px;
-    text-shadow: 0 4px 20px rgba(80,227,194,.25);
+    font-family: 'Oxanium', 'Segoe UI', sans-serif;
+    font-size: clamp(28px, 4vw, 46px); font-weight: 700; color: #f4f8fc;
+    letter-spacing: 0; text-align: center; margin-bottom: 12px;
+    text-shadow: 0 0 28px rgba(84, 220, 255, .22);
 }
 .home-subtitle { font-size: 16px; color: #9aa8bb; text-align: center; }
 
@@ -40,22 +62,23 @@ body {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 10px 16px; border-radius: 9px; font-size: 13px; font-weight: 700;
     text-decoration: none; color: #fff; transition: transform .15s, filter .15s, border-color .15s;
-    border: 1px solid rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.15); background: #171b24;
 }
 .social-btn:hover { transform: translateY(-2px); filter: brightness(1.12); }
-.social-btn:focus-visible, .auth-btn:focus-visible, .map-link:focus-visible, .last-map-link:focus-visible {
-    outline: 2px solid #50e3c2; outline-offset: 3px;
+.social-btn:focus-visible, .auth-btn:focus-visible, .map-link:focus-visible, .last-map-link:focus-visible, details.game-dropdown > summary:focus-visible {
+    outline: 2px solid var(--acid); outline-offset: 3px;
 }
-.social-btn svg { width: 16px; height: 16px; fill: currentColor; }
-.social-twitch { background: #6441a5; border-color: #7d5bbe; }
-.social-youtube { background: #c4302b; border-color: #e0443e; }
-.social-donate { background: #d94350; border-color: #ef6672; }
+.social-btn svg { width: 17px; height: 17px; fill: currentColor; }
+.social-twitch { background: #34204d; border-color: #8154ae; }
+.social-youtube { background: #481f24; border-color: #a63d48; }
+.social-donate { color: #1b1307; background: var(--orange); border-color: #ffd18c; }
+.social-donate svg { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Блок авторизации Google на главной странице */
 .auth-card {
     width: 100%; max-width: 520px;
-    background: linear-gradient(145deg, #1d2432, #151922);
-    border: 1px solid #2e3748; border-radius: 12px;
+    background: linear-gradient(145deg, #1a202a, #11151c);
+    border: 1px solid #37414f; border-left: 3px solid var(--cyan); border-radius: 8px;
     padding: 14px 18px; margin: 0 auto 44px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     box-shadow: 0 6px 20px rgba(0,0,0,.35);
@@ -63,104 +86,133 @@ body {
 .auth-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
 .auth-avatar {
     width: 36px; height: 36px; border-radius: 50%;
-    border: 1.5px solid #50e3c2; object-fit: cover; display: none; flex-shrink: 0;
+    border: 1.5px solid var(--acid); object-fit: cover; display: none; flex-shrink: 0;
 }
 .auth-text { font-size: 12.5px; color: #b0bac9; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; }
 .auth-text b { color: #fff; font-size: 13.5px; }
 .auth-btn {
     padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700;
-    border: 1px solid #0099e6; background: #0088cc; color: #fff;
+    border: 1px solid #65e2ff; background: #087c9d; color: #fff;
     cursor: pointer; transition: background .2s, transform .1s; flex-shrink: 0;
 }
-.auth-btn:hover { background: #0099e6; transform: translateY(-1px); }
-.auth-btn.logout { background: #5c2828; border-color: #7d3434; }
-.auth-btn.logout:hover { background: #7d3434; }
+.auth-btn:hover { background: #0898bd; transform: translateY(-1px); }
+.auth-btn.logout { background: #54272d; border-color: #a3434d; }
+.auth-btn.logout:hover { background: #71313a; }
 
 .section-heading { margin-bottom: 18px; }
-.section-heading h2 { color: #f4f8fc; font-size: 22px; margin-bottom: 5px; }
+.section-heading h2 { color: #f4f8fc; font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0; margin-bottom: 5px; }
 .section-heading p { color: #8a99ad; font-size: 13px; }
 .last-map { margin-bottom: 16px; }
 .last-map[hidden] { display: none; }
 .last-map-link {
-    display: inline-flex; align-items: center; gap: 8px; color: #50e3c2;
-    background: rgba(80, 227, 194, .08); border: 1px solid rgba(80, 227, 194, .25);
-    border-radius: 8px; padding: 9px 13px; text-decoration: none; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 8px; color: var(--acid);
+    background: rgba(199, 255, 63, .07); border: 1px solid rgba(199, 255, 63, .28);
+    border-radius: 6px; padding: 9px 13px; text-decoration: none; font-size: 13px;
 }
-.last-map-link:hover { background: rgba(80, 227, 194, .14); }
+.last-map-link:hover { background: rgba(199, 255, 63, .13); }
+.last-map-link svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .games-container {
     width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px; align-items: start;
 }
 
 details.game-dropdown {
-    background: linear-gradient(145deg, #212836, #171b24);
-    border: 1px solid #323c4e; border-radius: 14px; overflow: hidden;
-    box-shadow: 0 8px 25px rgba(0,0,0,.45); transition: border-color .25s;
+    --game-accent: var(--cyan);
+    background: linear-gradient(145deg, #1b222c, #11151c);
+    border: 1px solid #343e4a; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 12px 30px rgba(0,0,0,.38); transition: border-color .25s, transform .25s, box-shadow .25s;
 }
-details.game-dropdown:hover, details.game-dropdown[open], .game-placeholder:hover { border-color: #50e3c2; }
+details.game-dropdown:hover, details.game-dropdown[open] { border-color: var(--game-accent); box-shadow: 0 14px 36px rgba(0,0,0,.5), 0 0 20px color-mix(in srgb, var(--game-accent) 15%, transparent); }
+details.game-dropdown:hover { transform: translateY(-3px); }
 details.game-dropdown > summary { list-style: none; cursor: pointer; user-select: none; }
 details.game-dropdown > summary::-webkit-details-marker { display: none; }
 
+.theme-stellar { --game-accent: var(--cyan); }
 .game-banner {
-    height: 190px; background: linear-gradient(135deg, #162235, #0d131c);
+    height: 190px; background: #111720;
     position: relative; display: flex; align-items: center; justify-content: center;
-    border-bottom: 1px solid #2e3543; overflow: hidden;
+    border-bottom: 1px solid #303945; overflow: hidden;
 }
-.game-banner-image { width: 100%; height: 100%; object-fit: contain; transition: transform .4s ease; }
-details.game-dropdown:hover .game-banner-image { transform: scale(1.04); }
+.game-banner::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(8, 12, 18, .42), transparent 32%, transparent 68%, rgba(8, 12, 18, .42)); }
+.game-banner-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 38%; filter: saturate(.72) brightness(.52); opacity: .48; transform: scale(1.03); transition: opacity .45s, filter .45s, transform .65s; }
+.game-banner-image { position: relative; z-index: 2; width: min(62%, 340px); height: 74%; object-fit: contain; opacity: .84; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, .45)); transition: transform .4s ease, opacity .4s; }
+details.game-dropdown:hover .game-banner-art, details.game-dropdown:focus-within .game-banner-art { opacity: .82; filter: saturate(.9) brightness(.72); transform: scale(1.08); }
+details.game-dropdown:hover .game-banner-image, details.game-dropdown:focus-within .game-banner-image { transform: scale(1.04); opacity: 1; }
 .game-info {
     padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
 }
-.game-title { font-size: 20px; font-weight: 700; color: #fff; }
-.game-arrow { font-size: 14px; color: #50e3c2; transition: transform .25s; }
+.game-title { font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0; color: #fff; }
+.game-arrow { display: flex; color: var(--game-accent); transition: transform .25s; }
+.game-arrow svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
 .game-indicators { display: flex; align-items: center; gap: 10px; }
 .game-badge {
-    color: #50e3c2; background: rgba(80, 227, 194, .1); border: 1px solid rgba(80, 227, 194, .25);
-    border-radius: 999px; padding: 5px 9px; font-size: 10px; font-weight: 800;
-    letter-spacing: .7px; text-transform: uppercase;
+    color: var(--game-accent); background: color-mix(in srgb, var(--game-accent) 10%, transparent); border: 1px solid color-mix(in srgb, var(--game-accent) 35%, transparent);
+    border-radius: 4px; padding: 5px 9px; font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0; text-transform: uppercase;
 }
 
 .maps-list {
-    padding: 12px 16px 16px; background: #141820; border-top: 1px solid #283040;
+    padding: 12px 16px 16px; background: #11161e; border-top: 1px solid #28313d;
     display: flex; flex-direction: column; gap: 8px;
 }
 .map-link {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px; background: #1f2633; border: 1px solid #2e3748;
-    border-radius: 8px; color: #e0e6ed; text-decoration: none; font-weight: 600;
-    font-size: 14px; transition: background .15s, border-color .15s, transform .1s;
+    padding: 10px 14px; background: #1a2029; border: 1px solid #303945;
+    border-radius: 5px; color: #e0e6ed; text-decoration: none; font-weight: 600;
+    font-size: 14px; transition: background .15s, border-color .15s, transform .1s, color .15s;
 }
 .map-link:hover {
-    background: #283244; border-color: #50e3c2; color: #50e3c2; transform: translateX(4px);
+    background: #202a32; border-color: var(--game-accent); color: var(--game-accent); transform: translateX(4px);
 }
 .map-link span.status { font-size: 11px; color: #8a99ad; font-weight: normal; }
+.map-link span.status svg { width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.map-name { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
+.map-marker { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: var(--game-accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .game-placeholder {
-    min-width: 0; overflow: hidden; border-radius: 14px;
-    background: linear-gradient(145deg, #212836, #171b24);
-    border: 1px solid #323c4e; box-shadow: 0 8px 25px rgba(0,0,0,.3);
-    transition: border-color .25s;
+    --game-accent: var(--violet);
+    min-width: 0; overflow: hidden; border-radius: 8px;
+    background: linear-gradient(145deg, #1b222c, #11151c);
+    border: 1px solid #343e4a; box-shadow: 0 8px 25px rgba(0,0,0,.3);
+    transition: border-color .25s, transform .25s, box-shadow .25s;
 }
+.theme-tainted { --game-accent: var(--violet); }
+.theme-gothic { --game-accent: var(--acid); }
+.theme-atomic { --game-accent: var(--orange); }
+.game-placeholder:hover { border-color: var(--game-accent); transform: translateY(-3px); box-shadow: 0 14px 34px rgba(0,0,0,.45), 0 0 20px color-mix(in srgb, var(--game-accent) 13%, transparent); }
 .placeholder-banner {
-    background:
-        radial-gradient(ellipse at 50% 125%, rgba(80, 227, 194, .17), transparent 58%),
-        linear-gradient(135deg, #1b2535, #10151e);
+    background: #111720;
 }
 .placeholder-banner::before {
-    content: ""; width: 110px; height: 110px; border: 1px solid rgba(255,255,255,.08);
-    border-radius: 50%; box-shadow: 0 0 0 18px rgba(255,255,255,.025), 0 0 0 36px rgba(255,255,255,.02);
+    content: ""; position: absolute; inset: 0; opacity: .34;
+    background: repeating-linear-gradient(125deg, transparent 0 25px, color-mix(in srgb, var(--game-accent) 30%, transparent) 26px 27px, transparent 28px 54px);
+    background-size: 110px 100%; transition: opacity .35s;
 }
-.placeholder-banner .game-badge { position: absolute; top: 14px; right: 14px; }
+.placeholder-tainted .placeholder-banner { background: linear-gradient(110deg, #17111e, #111720 64%); }
+.placeholder-gothic .placeholder-banner { background: linear-gradient(110deg, #141b12, #111720 64%); }
+.placeholder-gothic .placeholder-banner::before { background-image: repeating-linear-gradient(0deg, transparent 0 20px, color-mix(in srgb, var(--game-accent) 24%, transparent) 21px 22px, transparent 23px 42px); }
+.placeholder-atomic .placeholder-banner { background: linear-gradient(110deg, #21150f, #111720 64%); }
+.placeholder-atomic .placeholder-banner::before { background-image: linear-gradient(90deg, transparent 49.5%, color-mix(in srgb, var(--game-accent) 26%, transparent) 50%, transparent 50.5%), linear-gradient(transparent 49.5%, color-mix(in srgb, var(--game-accent) 26%, transparent) 50%, transparent 50.5%); background-size: 36px 36px; }
+.game-placeholder:hover .placeholder-banner::before { opacity: .76; animation: signal-sweep 14s linear infinite; }
+.placeholder-banner .game-badge { position: absolute; top: 14px; right: 14px; z-index: 2; display: inline-flex; align-items: center; gap: 5px; }
+.game-badge svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.placeholder-lock { width: 38px; height: 38px; position: relative; z-index: 1; fill: none; stroke: var(--game-accent); stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 12px color-mix(in srgb, var(--game-accent) 55%, transparent)); transition: transform .35s, filter .35s; }
+.game-placeholder:hover .placeholder-lock { transform: translateY(-3px); filter: drop-shadow(0 0 18px color-mix(in srgb, var(--game-accent) 85%, transparent)); }
 .game-placeholder .game-info { padding-bottom: 8px; }
 .game-placeholder .game-title { display: block; font-size: 19px; }
-.placeholder-copy { padding: 0 20px 19px; color: #8a99ad; font-size: 13px; line-height: 1.5; }
+.placeholder-copy { padding: 0 20px 19px; color: #9aa8b8; font-size: 13px; line-height: 1.5; }
+@keyframes signal-sweep { to { background-position: 110px 0; } }
+@keyframes card-arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.game-dropdown, .game-placeholder { animation: card-arrive .45s ease both; }
+.game-placeholder:nth-child(2) { animation-delay: .08s; }
+.game-placeholder:nth-child(3) { animation-delay: .16s; }
+.game-placeholder:nth-child(4) { animation-delay: .24s; }
 @media (max-width: 680px) {
     body { padding: 44px 18px; }
     .games-container { grid-template-columns: 1fr; gap: 14px; }
 }
 @media (max-width: 480px) {
     body { padding: 32px 14px 20px; }
-    .home-title { letter-spacing: -.5px; }
     .social-links { flex-wrap: wrap; gap: 8px; }
     .auth-card { padding: 12px; gap: 8px; margin-bottom: 34px; }
     .auth-btn { min-height: 44px; padding: 8px 10px; }
@@ -169,7 +221,7 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
     .map-link span.status { white-space: nowrap; margin-left: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
 </style>
 </head>
@@ -190,7 +242,10 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
             <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
             <span>YouTube</span>
         </a>
-        <a href="https://www.donationalerts.com/r/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-donate">☕ DONATE</a>
+        <a href="https://www.donationalerts.com/r/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-donate">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l1.5 12h-17L5 8Z"/><path d="M8 8V6a4 4 0 0 1 8 0v2M8 12h8M9 16h6"/><path d="m12 10 1.4 2.4L16 13l-1.8 1.8.4 2.7-2.6-1.3-2.6 1.3.4-2.7L8 13l2.6-.6L12 10Z"/></svg>
+            <span>Поддержать</span>
+        </a>
     </nav>
 
     <!-- Карточка облачной синхронизации Google -->
@@ -212,84 +267,88 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
         </div>
         <p class="last-map" id="last-map" hidden>
             <a class="last-map-link" id="last-map-link" href="#">
-                <span aria-hidden="true">↗</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
                 <span>Продолжить: <strong id="last-map-name"></strong></span>
             </a>
         </p>
     <div class="games-container">
-        <details class="game-dropdown" open>
+        <details class="game-dropdown theme-stellar">
             <summary>
                 <div class="game-banner">
+                    <img class="game-banner-art" src="./stellar-blade-map/maps/eidos7.png" alt="">
                     <img class="game-banner-image" src="./stellar-blade-map/maps/stellar-blade-logo.png" alt="Stellar Blade — выбрать локацию">
                 </div>
                 <div class="game-info">
                     <span class="game-title">Stellar Blade</span>
                     <span class="game-indicators">
                         <span class="game-badge">9 карт</span>
-                        <span class="game-arrow" aria-hidden="true">▼</span>
+                        <span class="game-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
                     </span>
                 </div>
             </summary>
             <div class="maps-list">
                 <a href="./stellar-blade-map/eidos7.html" class="map-link">
-                    <span>🗺 Эйдос 7 (Eidos 7)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Эйдос 7 (Eidos 7)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/xion.html" class="map-link">
-                    <span>🗺 Город Ксион (Xion City)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Город Ксион (Xion City)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/wasteland.html" class="map-link">
-                    <span>🗺 Пустошь (Wasteland)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Пустошь (Wasteland)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/altess_levoire.html" class="map-link">
-                    <span>🗺 Атлесс Левуар (Altess Levoire)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Атлесс Левуар (Altess Levoire)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/matrix11.html" class="map-link">
-                    <span>🗺 Матрица 11 (Matrix 11)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Матрица 11 (Matrix 11)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/great_desert.html" class="map-link">
-                    <span>🗺 Великая пустыня (Great Desert)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Великая пустыня (Great Desert)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/abyss_levoire.html" class="map-link">
-                    <span>🗺 Бездна Левуар (Abyss Levoire)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Бездна Левуар (Abyss Levoire)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/spire4.html" class="map-link">
-                    <span>🗺 Шпиль 4 (Spire 4)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Шпиль 4 (Spire 4)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="./stellar-blade-map/eidos9.html" class="map-link">
-                    <span>🗺 Эйдос 9 (Eidos 9)</span>
-                    <span class="status">Открыть ➔</span>
+                    <span class="map-name"><svg class="map-marker" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Эйдос 9 (Eidos 9)</span>
+                    <span class="status" aria-label="Открыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                 </a>
             </div>
         </details>
-        <article class="game-placeholder" aria-label="Tainted Grail: The Fall of Avalon — карта в разработке">
+        <article class="game-placeholder theme-tainted placeholder-tainted" aria-label="Tainted Grail: The Fall of Avalon — карта в разработке">
             <div class="game-banner placeholder-banner">
-                <span class="game-badge">Скоро</span>
+            <span class="game-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Заблокировано</span>
+            <svg class="placeholder-lock" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="14" width="24" height="15" rx="3"/><path d="M9 14V9a7 7 0 0 1 14 0v5M16 20v4"/></svg>
             </div>
             <div class="game-info">
                 <h3 class="game-title">Tainted Grail: The Fall of Avalon</h3>
             </div>
             <p class="placeholder-copy">Интерактивная карта для этого мира появится здесь.</p>
         </article>
-        <article class="game-placeholder" aria-label="Gothic 1 Remake — карта в разработке">
+        <article class="game-placeholder theme-gothic placeholder-gothic" aria-label="Gothic 1 Remake — карта в разработке">
             <div class="game-banner placeholder-banner">
-                <span class="game-badge">Скоро</span>
+            <span class="game-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Заблокировано</span>
+            <svg class="placeholder-lock" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="14" width="24" height="15" rx="3"/><path d="M9 14V9a7 7 0 0 1 14 0v5M16 20v4"/></svg>
             </div>
             <div class="game-info">
                 <h3 class="game-title">Gothic 1 Remake</h3>
             </div>
             <p class="placeholder-copy">Интерактивная карта для этого мира появится здесь.</p>
         </article>
-        <article class="game-placeholder" aria-label="Atomic Heart — карта в разработке">
+        <article class="game-placeholder theme-atomic placeholder-atomic" aria-label="Atomic Heart — карта в разработке">
             <div class="game-banner placeholder-banner">
-                <span class="game-badge">Скоро</span>
+            <span class="game-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Заблокировано</span>
+            <svg class="placeholder-lock" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="14" width="24" height="15" rx="3"/><path d="M9 14V9a7 7 0 0 1 14 0v5M16 20v4"/></svg>
             </div>
             <div class="game-info">
                 <h3 class="game-title">Atomic Heart</h3>
@@ -324,7 +383,7 @@ if (savedMap && mapLinks.length) {
     if (lastMap) {
         document.getElementById("last-map-link").href = lastMap.href;
         document.getElementById("last-map-name").textContent =
-            lastMap.querySelector("span").textContent.replace(/^🗺\s*/, "");
+            lastMap.querySelector(".map-name").textContent.trim();
         document.getElementById("last-map").hidden = false;
     }
 }
