@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="avatar-favicon.png">
+<title>Интерактивные карты от BroskiPlay</title>
+<!-- Подключение Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body {
+    min-height: 100vh;
+    background: radial-gradient(circle at center, #1e2638 0%, #0f131d 100%);
+    color: #e0e6ed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.home-title {
+    font-size: 32px; font-weight: 800; color: #50e3c2; text-transform: uppercase;
+    letter-spacing: 1.5px; text-align: center; margin-bottom: 10px;
+    text-shadow: 0 4px 20px rgba(80,227,194,.25);
+}
+.home-subtitle { font-size: 15px; color: #8a99ad; margin-bottom: 22px; text-align: center; }
+
+.social-links { display: flex; gap: 12px; align-items: center; justify-content: center; margin-bottom: 22px; }
+.social-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    text-decoration: none; color: #fff; transition: transform .15s, filter .15s;
+    border: 1px solid rgba(255,255,255,.15);
+}
+.social-btn:hover { transform: translateY(-2px); filter: brightness(1.12); }
+.social-btn svg { width: 16px; height: 16px; fill: currentColor; }
+.social-twitch { background: #6441a5; border-color: #7d5bbe; }
+.social-youtube { background: #c4302b; border-color: #e0443e; }
+.social-donate { background: #d94350; border-color: #ef6672; }
+
+/* Блок авторизации Google на главной странице */
+.auth-card {
+    width: 100%; max-width: 440px;
+    background: linear-gradient(145deg, #1d2432, #151922);
+    border: 1px solid #2e3748; border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 22px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.35);
+}
+.auth-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+.auth-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid #50e3c2; object-fit: cover; display: none; flex-shrink: 0;
+}
+.auth-text { font-size: 12.5px; color: #b0bac9; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; }
+.auth-text b { color: #fff; font-size: 13.5px; }
+.auth-btn {
+    padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700;
+    border: 1px solid #0099e6; background: #0088cc; color: #fff;
+    cursor: pointer; transition: background .2s, transform .1s; flex-shrink: 0;
+}
+.auth-btn:hover { background: #0099e6; transform: translateY(-1px); }
+.auth-btn.logout { background: #5c2828; border-color: #7d3434; }
+.auth-btn.logout:hover { background: #7d3434; }
+
+.games-container { width: 100%; max-width: 440px; }
+
+details.game-dropdown {
+    background: linear-gradient(145deg, #212836, #171b24);
+    border: 1px solid #323c4e; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0,0,0,.45); transition: border-color .25s;
+}
+details.game-dropdown:hover, details.game-dropdown[open] { border-color: #50e3c2; }
+details.game-dropdown > summary { list-style: none; cursor: pointer; user-select: none; }
+details.game-dropdown > summary::-webkit-details-marker { display: none; }
+
+.game-banner {
+    height: 150px; background: linear-gradient(135deg, #162235, #0d131c);
+    position: relative; display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid #2e3543; overflow: hidden;
+}
+.game-banner-image { width: 100%; height: 100%; object-fit: contain; transition: transform .4s ease; }
+details.game-dropdown:hover .game-banner-image { transform: scale(1.04); }
+.game-info {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+}
+.game-title { font-size: 20px; font-weight: 700; color: #fff; text-decoration: none; }
+.game-title:hover { color: #50e3c2; }
+.game-arrow { font-size: 14px; color: #50e3c2; transition: transform .25s; }
+details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
+
+.maps-list {
+    padding: 12px 16px 16px; background: #141820; border-top: 1px solid #283040;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.map-link {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: #1f2633; border: 1px solid #2e3748;
+    border-radius: 8px; color: #e0e6ed; text-decoration: none; font-weight: 600;
+    font-size: 14px; transition: background .15s, border-color .15s, transform .1s;
+}
+.map-link:hover {
+    background: #283244; border-color: #50e3c2; color: #50e3c2; transform: translateX(4px);
+}
+.map-link span.status { font-size: 11px; color: #8a99ad; font-weight: normal; }
+@media (max-width: 480px) {
+    body { min-height: 100dvh; justify-content: flex-start; padding: 28px 14px 20px; }
+    .home-title { font-size: 25px; letter-spacing: 1px; }
+    .social-links { flex-wrap: wrap; }
+    .auth-card { padding: 12px; gap: 8px; }
+    .auth-btn { min-height: 44px; padding: 8px 10px; }
+    .map-link { min-height: 48px; }
+}
+</style>
+</head>
+<body>
+
+    <h1 class="home-title">Интерактивные карты от BroskiPlay</h1>
+    <p class="home-subtitle">Выберите игру и нужную локацию</p>
+
+    <div class="social-links">
+        <a href="https://www.twitch.tv/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-twitch">
+            <svg viewBox="0 0 24 24"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+            <span>Twitch</span>
+        </a>
+        <a href="https://youtube.com/@broskiplayt" target="_blank" rel="noopener noreferrer" class="social-btn social-youtube">
+            <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            <span>YouTube</span>
+        </a>
+        <a href="https://www.donationalerts.com/r/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-donate">☕ DONATE</a>
+    </div>
+
+    <!-- Карточка облачной синхронизации Google -->
+    <div class="auth-card">
+        <div class="auth-info">
+            <img id="auth-avatar" class="auth-avatar" src="" alt="Avatar">
+            <div id="auth-status" class="auth-text">
+                <b>Гостевой режим</b><br>
+                <span>Войдите через Google для синхронизации меток</span>
+            </div>
+        </div>
+        <button id="auth-btn" class="auth-btn" onclick="toggleGoogleAuth()">🔑 Войти с Google</button>
+    </div>
+
+    <div class="games-container">
+        <details class="game-dropdown">
+            <summary>
+                <div class="game-banner">
+                    <img class="game-banner-image" src="maps/stellar-blade-logo.png" alt="Stellar Blade — выбрать локацию">
+                </div>
+                <div class="game-info">
+                    <a class="game-title" href="eidos7.html">Stellar Blade</a>
+                    <span class="game-arrow">▼</span>
+                </div>
+            </summary>
+            <div class="maps-list">
+                <a href="eidos7.html" class="map-link">
+                    <span>🗺 Эйдос 7 (Eidos 7)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="xion.html" class="map-link">
+                    <span>🗺 Город Ксион (Xion City)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="wasteland.html" class="map-link">
+                    <span>🗺 Пустошь (Wasteland)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="altess_levoire.html" class="map-link">
+                    <span>🗺 Атлесс Левуар (Altess Levoire)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="matrix11.html" class="map-link">
+                    <span>🗺 Матрица 11 (Matrix 11)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="great_desert.html" class="map-link">
+                    <span>🗺 Великая пустыня (Great Desert)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="abyss_levoire.html" class="map-link">
+                    <span>🗺 Бездна Левуар (Abyss Levoire)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="spire4.html" class="map-link">
+                    <span>🗺 Шпиль 4 (Spire 4)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+                <a href="eidos9.html" class="map-link">
+                    <span>🗺 Эйдос 9 (Eidos 9)</span>
+                    <span class="status">Открыть ➔</span>
+                </a>
+            </div>
+        </details>
+    </div>
+
+<script>
+const mapLinks = [...document.querySelectorAll(".map-link")];
+const gameTitleLink = document.querySelector(".game-title");
+const lastMap = localStorage.getItem("sb_last_map");
+
+if (mapLinks.some(link => link.getAttribute("href") === lastMap)) {
+    gameTitleLink.href = lastMap;
+}
+</script>
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyBZ29h18Z1k0gE4dAEca5JH8yePQgxhaII",
+    authDomain: "broskiplaymaps.firebaseapp.com",
+    projectId: "broskiplaymaps",
+    storageBucket: "broskiplaymaps.firebasestorage.app",
+    messagingSenderId: "418362476965",
+    appId: "1:418362476965:web:59ce4e677b1a0a84d7404c",
+    measurementId: "G-D5PQJQ7HZG"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+auth.onAuthStateChanged((user) => {
+    const statusEl = document.getElementById("auth-status");
+    const btnEl = document.getElementById("auth-btn");
+    const avatarEl = document.getElementById("auth-avatar");
+
+    if (user) {
+        statusEl.innerHTML = `<b>${user.displayName || user.email}</b><br><span style="color:#50e3c2;">● Облачная синхронизация активна</span>`;
+        btnEl.textContent = "🚪 Выйти";
+        btnEl.classList.add("logout");
+        if (user.photoURL) {
+            avatarEl.src = user.photoURL;
+            avatarEl.style.display = "block";
+        }
+    } else {
+        statusEl.innerHTML = `<b>Гостевой режим</b><br><span>Войдите через Google для синхронизации меток</span>`;
+        btnEl.textContent = "🔑 Войти с Google";
+        btnEl.classList.remove("logout");
+        avatarEl.style.display = "none";
+    }
+});
+
+function toggleGoogleAuth() {
+    if (auth.currentUser) {
+        auth.signOut();
+    } else {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch((err) => {
+            alert("Ошибка авторизации Google: " + err.message);
+        });
+    }
+}
+</script>
+</body>
+</html>
