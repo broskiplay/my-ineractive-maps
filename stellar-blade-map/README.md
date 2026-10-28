@@ -69,3 +69,7 @@ python3 -m http.server 8000
 ---
 
 *Stellar Blade™ is a trademark of SHIFT UP Corporation. This fan-made project is not affiliated with or endorsed by SHIFT UP Corporation or Sony Interactive Entertainment.*
+
+### Безопасность Firebase
+
+Web API key Firebase не является секретом и виден клиенту. Ограничьте его в Google Cloud Console по HTTP referrer (`https://broskiplay.ru/*`, `https://www.broskiplay.ru/*`) и по API. Также ограничьте разрешённые домены Firebase Authentication и опубликуйте [firestore.rules](./firestore.rules). Рабочая конфигурация берётся из `firebase-config.js`, который не добавляется в Git; шаблон находится в [firebase-config.example.js](./firebase-config.example.js).

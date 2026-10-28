@@ -1,12 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // The browser Firebase config is public. Authorization is enforced here.
     match /users/{userId}/mapProgress/{mapId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if signedInAs(userId);
+      allow create, update: if signedInAs(userId)
+        && request.resource.data.keys().hasOnly(['foundIds', 'updatedAt'])
+        && request.resource.data.foundIds is list
+        && request.resource.data.foundIds.size() <= 5000
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if signedInAs(userId);
     }
 
     match /users/{userId}/customMarkers/{mapId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if signedInAs(userId);
+      allow create, update: if signedInAs(userId)
+        && request.resource.data.keys().hasOnly(['markers', 'updatedAt'])
+        && request.resource.data.markers is list
+        && request.resource.data.markers.size() <= 2000
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if signedInAs(userId);
+    }
+
+    function signedInAs(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
   }
 }

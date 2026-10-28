@@ -61,3 +61,14 @@ python3 -m http.server 8000
 - [Twitch: BroskiPlay](https://www.twitch.tv/broskiplay)
 - [YouTube: BroskiPlay](https://youtube.com/@broskiplayt)
 - [Поддержать проект на DonationAlerts](https://www.donationalerts.com/r/broskiplay)
+## Безопасность Firebase
+
+Firebase Web API key **не является паролем**: он неизбежно виден браузеру работающего сайта. Защищать нужно не скрытием ключа, а ограничениями проекта:
+
+1. В Google Cloud Console ограничьте ключ по HTTP referrer только `https://broskiplay.ru/*` и `https://www.broskiplay.ru/*` (для локальной разработки добавьте localhost отдельно).
+2. В API restrictions оставьте только API, которые нужны Firebase (как минимум Identity Toolkit API и Cloud Firestore API).
+3. В Firebase Authentication разрешите только нужные домены и Google-провайдера.
+4. Опубликуйте [правила Firestore](stellar-blade-map/firestore.rules) из репозитория.
+5. Если ключ уже попал в публичный репозиторий или сторонние логи, смените его в Google Cloud Console после настройки ограничений. Это не заменяет правила Firestore.
+
+Рабочий ключ не хранится в Git: перед локальным запуском или деплоем скопируйте `firebase-config.example.js` в `firebase-config.js` и заполните значениями проекта. Файл `firebase-config.js` добавлен в `.gitignore`.

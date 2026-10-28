@@ -1,13 +1,8 @@
 (function () {
-    const firebaseConfig = {
-        apiKey: "AIzaSyBZ29h18Z1k0gE4dAEca5JH8yePQgxhaII",
-        authDomain: "broskiplaymaps.firebaseapp.com",
-        projectId: "broskiplaymaps",
-        storageBucket: "broskiplaymaps.firebasestorage.app",
-        messagingSenderId: "418362476965",
-        appId: "1:418362476965:web:59ce4e677b1a0a84d7404c",
-        measurementId: "G-D5PQJQ7HZG"
-    };
+    const firebaseConfig = window.__FIREBASE_CONFIG__;
+    if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("REPLACE_")) {
+        throw new Error("Firebase configuration is missing. Create firebase-config.js from firebase-config.example.js.");
+    }
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 

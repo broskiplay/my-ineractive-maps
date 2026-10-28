@@ -1,0 +1,3 @@
+# Firebase client configuration contains the project identifier and is supplied at deploy time.
+/firebase-config.js
+/stellar-blade-map/firebase-config.js
