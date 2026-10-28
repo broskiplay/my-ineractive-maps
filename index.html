@@ -13,29 +13,39 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 body {
     min-height: 100vh;
-    background: radial-gradient(circle at center, #1e2638 0%, #0f131d 100%);
+    background:
+        radial-gradient(ellipse at 50% -20%, rgba(80, 227, 194, .13), transparent 46%),
+        radial-gradient(circle at center, #1e2638 0%, #0f131d 100%);
     color: #e0e6ed;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    padding: 64px 24px;
+}
+.site-shell {
+    width: min(100%, 1080px);
+    margin: 0 auto;
+}
+.hero { text-align: center; margin-bottom: 30px; }
+.eyebrow {
+    color: #50e3c2; font-size: 12px; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 12px;
 }
 .home-title {
-    font-size: 32px; font-weight: 800; color: #50e3c2; text-transform: uppercase;
-    letter-spacing: 1.5px; text-align: center; margin-bottom: 10px;
+    font-size: clamp(28px, 4vw, 46px); font-weight: 800; color: #f4f8fc;
+    letter-spacing: -1.2px; text-align: center; margin-bottom: 12px;
     text-shadow: 0 4px 20px rgba(80,227,194,.25);
 }
-.home-subtitle { font-size: 15px; color: #8a99ad; margin-bottom: 22px; text-align: center; }
+.home-subtitle { font-size: 16px; color: #9aa8bb; text-align: center; }
 
-.social-links { display: flex; gap: 12px; align-items: center; justify-content: center; margin-bottom: 22px; }
+.social-links { display: flex; gap: 12px; align-items: center; justify-content: center; margin-bottom: 24px; }
 .social-btn {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700;
-    text-decoration: none; color: #fff; transition: transform .15s, filter .15s;
+    padding: 10px 16px; border-radius: 9px; font-size: 13px; font-weight: 700;
+    text-decoration: none; color: #fff; transition: transform .15s, filter .15s, border-color .15s;
     border: 1px solid rgba(255,255,255,.15);
 }
 .social-btn:hover { transform: translateY(-2px); filter: brightness(1.12); }
+.social-btn:focus-visible, .auth-btn:focus-visible, .map-link:focus-visible, .last-map-link:focus-visible {
+    outline: 2px solid #50e3c2; outline-offset: 3px;
+}
 .social-btn svg { width: 16px; height: 16px; fill: currentColor; }
 .social-twitch { background: #6441a5; border-color: #7d5bbe; }
 .social-youtube { background: #c4302b; border-color: #e0443e; }
@@ -43,10 +53,10 @@ body {
 
 /* Блок авторизации Google на главной странице */
 .auth-card {
-    width: 100%; max-width: 440px;
+    width: 100%; max-width: 520px;
     background: linear-gradient(145deg, #1d2432, #151922);
     border: 1px solid #2e3748; border-radius: 12px;
-    padding: 14px 18px; margin-bottom: 22px;
+    padding: 14px 18px; margin: 0 auto 44px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     box-shadow: 0 6px 20px rgba(0,0,0,.35);
 }
@@ -66,19 +76,33 @@ body {
 .auth-btn.logout { background: #5c2828; border-color: #7d3434; }
 .auth-btn.logout:hover { background: #7d3434; }
 
-.games-container { width: 100%; max-width: 440px; }
+.section-heading { margin-bottom: 18px; }
+.section-heading h2 { color: #f4f8fc; font-size: 22px; margin-bottom: 5px; }
+.section-heading p { color: #8a99ad; font-size: 13px; }
+.last-map { margin-bottom: 16px; }
+.last-map[hidden] { display: none; }
+.last-map-link {
+    display: inline-flex; align-items: center; gap: 8px; color: #50e3c2;
+    background: rgba(80, 227, 194, .08); border: 1px solid rgba(80, 227, 194, .25);
+    border-radius: 8px; padding: 9px 13px; text-decoration: none; font-size: 13px;
+}
+.last-map-link:hover { background: rgba(80, 227, 194, .14); }
+.games-container {
+    width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px; align-items: start;
+}
 
 details.game-dropdown {
     background: linear-gradient(145deg, #212836, #171b24);
     border: 1px solid #323c4e; border-radius: 14px; overflow: hidden;
     box-shadow: 0 8px 25px rgba(0,0,0,.45); transition: border-color .25s;
 }
-details.game-dropdown:hover, details.game-dropdown[open] { border-color: #50e3c2; }
+details.game-dropdown:hover, details.game-dropdown[open], .game-placeholder:hover { border-color: #50e3c2; }
 details.game-dropdown > summary { list-style: none; cursor: pointer; user-select: none; }
 details.game-dropdown > summary::-webkit-details-marker { display: none; }
 
 .game-banner {
-    height: 150px; background: linear-gradient(135deg, #162235, #0d131c);
+    height: 190px; background: linear-gradient(135deg, #162235, #0d131c);
     position: relative; display: flex; align-items: center; justify-content: center;
     border-bottom: 1px solid #2e3543; overflow: hidden;
 }
@@ -90,6 +114,12 @@ details.game-dropdown:hover .game-banner-image { transform: scale(1.04); }
 .game-title { font-size: 20px; font-weight: 700; color: #fff; }
 .game-arrow { font-size: 14px; color: #50e3c2; transition: transform .25s; }
 details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
+.game-indicators { display: flex; align-items: center; gap: 10px; }
+.game-badge {
+    color: #50e3c2; background: rgba(80, 227, 194, .1); border: 1px solid rgba(80, 227, 194, .25);
+    border-radius: 999px; padding: 5px 9px; font-size: 10px; font-weight: 800;
+    letter-spacing: .7px; text-transform: uppercase;
+}
 
 .maps-list {
     padding: 12px 16px 16px; background: #141820; border-top: 1px solid #283040;
@@ -105,22 +135,53 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
     background: #283244; border-color: #50e3c2; color: #50e3c2; transform: translateX(4px);
 }
 .map-link span.status { font-size: 11px; color: #8a99ad; font-weight: normal; }
+.game-placeholder {
+    min-width: 0; overflow: hidden; border-radius: 14px;
+    background: linear-gradient(145deg, #212836, #171b24);
+    border: 1px solid #323c4e; box-shadow: 0 8px 25px rgba(0,0,0,.3);
+    transition: border-color .25s;
+}
+.placeholder-banner {
+    background:
+        radial-gradient(ellipse at 50% 125%, rgba(80, 227, 194, .17), transparent 58%),
+        linear-gradient(135deg, #1b2535, #10151e);
+}
+.placeholder-banner::before {
+    content: ""; width: 110px; height: 110px; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 50%; box-shadow: 0 0 0 18px rgba(255,255,255,.025), 0 0 0 36px rgba(255,255,255,.02);
+}
+.placeholder-banner .game-badge { position: absolute; top: 14px; right: 14px; }
+.game-placeholder .game-info { padding-bottom: 8px; }
+.game-placeholder .game-title { display: block; font-size: 19px; }
+.placeholder-copy { padding: 0 20px 19px; color: #8a99ad; font-size: 13px; line-height: 1.5; }
+@media (max-width: 680px) {
+    body { padding: 44px 18px; }
+    .games-container { grid-template-columns: 1fr; gap: 14px; }
+}
 @media (max-width: 480px) {
-    body { min-height: 100dvh; justify-content: flex-start; padding: 28px 14px 20px; }
-    .home-title { font-size: 25px; letter-spacing: 1px; }
-    .social-links { flex-wrap: wrap; }
-    .auth-card { padding: 12px; gap: 8px; }
+    body { padding: 32px 14px 20px; }
+    .home-title { letter-spacing: -.5px; }
+    .social-links { flex-wrap: wrap; gap: 8px; }
+    .auth-card { padding: 12px; gap: 8px; margin-bottom: 34px; }
     .auth-btn { min-height: 44px; padding: 8px 10px; }
-    .map-link { min-height: 48px; }
+    .game-banner { height: 160px; }
+    .map-link { min-height: 48px; padding: 10px; }
+    .map-link span.status { white-space: nowrap; margin-left: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 </style>
 </head>
 <body>
+<main class="site-shell">
+    <header class="hero">
+        <p class="eyebrow">Карты · находки · приключения</p>
+        <h1 class="home-title">Интерактивные карты от BroskiPlay</h1>
+        <p class="home-subtitle">Исследуйте игровые миры и отмечайте всё важное на карте</p>
+    </header>
 
-    <h1 class="home-title">Интерактивные карты от BroskiPlay</h1>
-    <p class="home-subtitle">Выберите игру и нужную локацию</p>
-
-    <div class="social-links">
+    <nav class="social-links" aria-label="Социальные сети и поддержка">
         <a href="https://www.twitch.tv/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-twitch">
             <svg viewBox="0 0 24 24"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
             <span>Twitch</span>
@@ -130,7 +191,7 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
             <span>YouTube</span>
         </a>
         <a href="https://www.donationalerts.com/r/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-donate">☕ DONATE</a>
-    </div>
+    </nav>
 
     <!-- Карточка облачной синхронизации Google -->
     <div class="auth-card">
@@ -144,6 +205,17 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
         <button id="auth-btn" class="auth-btn" onclick="toggleGoogleAuth()">🔑 Войти с Google</button>
     </div>
 
+    <section class="game-library" aria-labelledby="games-heading">
+        <div class="section-heading">
+            <h2 id="games-heading">Библиотека игр</h2>
+            <p>Выберите игру, чтобы открыть доступные карты</p>
+        </div>
+        <p class="last-map" id="last-map" hidden>
+            <a class="last-map-link" id="last-map-link" href="#">
+                <span aria-hidden="true">↗</span>
+                <span>Продолжить: <strong id="last-map-name"></strong></span>
+            </a>
+        </p>
     <div class="games-container">
         <details class="game-dropdown" open>
             <summary>
@@ -152,7 +224,10 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
                 </div>
                 <div class="game-info">
                     <span class="game-title">Stellar Blade</span>
-                    <span class="game-arrow">▼</span>
+                    <span class="game-indicators">
+                        <span class="game-badge">9 карт</span>
+                        <span class="game-arrow" aria-hidden="true">▼</span>
+                    </span>
                 </div>
             </summary>
             <div class="maps-list">
@@ -194,8 +269,66 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
                 </a>
             </div>
         </details>
+        <article class="game-placeholder" aria-label="Tainted Grail: The Fall of Avalon — карта в разработке">
+            <div class="game-banner placeholder-banner">
+                <span class="game-badge">Скоро</span>
+            </div>
+            <div class="game-info">
+                <h3 class="game-title">Tainted Grail: The Fall of Avalon</h3>
+            </div>
+            <p class="placeholder-copy">Интерактивная карта для этого мира появится здесь.</p>
+        </article>
+        <article class="game-placeholder" aria-label="Gothic 1 Remake — карта в разработке">
+            <div class="game-banner placeholder-banner">
+                <span class="game-badge">Скоро</span>
+            </div>
+            <div class="game-info">
+                <h3 class="game-title">Gothic 1 Remake</h3>
+            </div>
+            <p class="placeholder-copy">Интерактивная карта для этого мира появится здесь.</p>
+        </article>
+        <article class="game-placeholder" aria-label="Atomic Heart — карта в разработке">
+            <div class="game-banner placeholder-banner">
+                <span class="game-badge">Скоро</span>
+            </div>
+            <div class="game-info">
+                <h3 class="game-title">Atomic Heart</h3>
+            </div>
+            <p class="placeholder-copy">Интерактивная карта для этого мира появится здесь.</p>
+        </article>
     </div>
+    </section>
+</main>
 
+<script>
+const mapLinks = [...document.querySelectorAll(".map-link")];
+let savedMap = null;
+try {
+    savedMap = localStorage.getItem("sb_last_map");
+} catch (error) {
+    console.error("Не удалось прочитать последнюю карту:", error);
+}
+if (savedMap && mapLinks.length) {
+    const gameRoot = new URL(".", mapLinks[0].href);
+    let savedMapUrl;
+    try {
+        savedMapUrl = new URL(savedMap, gameRoot);
+    } catch (error) {
+        console.error("Не удалось открыть последнюю карту:", error);
+    }
+
+    const lastMap = savedMapUrl && mapLinks.find((link) => {
+        const mapUrl = new URL(link.href);
+        return mapUrl.origin === savedMapUrl.origin && mapUrl.pathname === savedMapUrl.pathname;
+    });
+    if (lastMap) {
+        document.getElementById("last-map-link").href = lastMap.href;
+        document.getElementById("last-map-name").textContent =
+            lastMap.querySelector("span").textContent.replace(/^🗺\s*/, "");
+        document.getElementById("last-map").hidden = false;
+    }
+}
+</script>
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyBZ29h18Z1k0gE4dAEca5JH8yePQgxhaII",
