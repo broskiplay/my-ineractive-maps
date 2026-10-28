@@ -117,6 +117,18 @@ body::before {
 .section-heading { margin-bottom: 18px; }
 .section-heading h2 { color: #f4f8fc; font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0; margin-bottom: 5px; }
 .section-heading p { color: #8a99ad; font-size: 13px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.game-search { margin-bottom: 16px; }
+.game-search input {
+    width: 100%; min-height: 46px; padding: 11px 14px;
+    color: var(--text); background: #111720; border: 1px solid #343e4a; border-radius: 8px;
+    font-size: 14px; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.game-search input::placeholder { color: #778596; }
+.game-search input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(84, 220, 255, .12); }
+.game-search input:focus-visible { outline: 2px solid var(--acid); outline-offset: 2px; }
+.game-search-status { min-height: 18px; margin-top: 7px; color: #9aa8bb; font-size: 12px; }
+.game-search-status:empty { display: none; }
 .last-map { margin-bottom: 16px; }
 .last-map[hidden] { display: none; }
 .last-map-link {
@@ -308,13 +320,18 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
             <h2 id="games-heading">Библиотека игр</h2>
             <p>Выберите игру, чтобы открыть доступные карты</p>
         </div>
+        <div class="game-search">
+            <label class="sr-only" for="game-search-input">Поиск игры</label>
+            <input id="game-search-input" type="search" placeholder="Найти игру, например Stellar Blade" autocomplete="off" aria-controls="games-container" aria-describedby="game-search-status">
+            <p class="game-search-status" id="game-search-status" role="status" aria-live="polite"></p>
+        </div>
         <p class="last-map" id="last-map" hidden>
             <a class="last-map-link" id="last-map-link" href="#">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
                 <span>Продолжить: <strong id="last-map-name"></strong></span>
             </a>
         </p>
-    <div class="games-container">
+    <div class="games-container" id="games-container">
         <details class="game-dropdown theme-stellar">
             <summary>
                 <div class="game-banner">
@@ -531,6 +548,24 @@ window.setInterval(updateYoutubeButton, 15 * 60 * 1000);
 
 <script>
 const mapLinks = [...document.querySelectorAll(".map-link")];
+const gameSearchInput = document.getElementById("game-search-input");
+const gameSearchStatus = document.getElementById("game-search-status");
+const gameCards = [...document.querySelectorAll("#games-container > .game-dropdown, #games-container > .game-placeholder")];
+
+gameSearchInput.addEventListener("input", () => {
+    const query = gameSearchInput.value.trim().toLocaleLowerCase("ru");
+    let visibleCount = 0;
+    gameCards.forEach(card => {
+        const title = card.querySelector(".game-title").textContent.trim().toLocaleLowerCase("ru");
+        const isMatch = !query || title.includes(query);
+        card.hidden = !isMatch;
+        if (isMatch) visibleCount++;
+    });
+    gameSearchStatus.textContent = query
+        ? visibleCount ? `Найдено: ${visibleCount} из ${gameCards.length}` : "Игры не найдены. Проверьте запрос."
+        : "";
+});
+
 let savedMap = null;
 try {
     savedMap = localStorage.getItem("sb_last_map");
