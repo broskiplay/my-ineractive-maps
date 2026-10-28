@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="avatar-favicon.png">
-<title>Интерактивная карта Stellar Blade by BroskiPlay — Эйдос 7</title>
+<meta name="description" content="Интерактивная карта Stellar Blade — Эйдос 9 (Eidos 9).">
+<title>Интерактивная карта Stellar Blade by BroskiPlay — Эйдос 9 (Eidos 9)</title>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -359,18 +360,22 @@ body.ctrl-pressed .custom-pin { cursor:move !important; box-shadow:0 0 10px #50e
 <div id="map"></div>
 
 <script>
+</script>
+
+<script>
 // =========================================================================
-// НАСТРОЙКИ ТЕКУЩЕЙ КАРТЫ (ДЛЯ СОЗДАНИЯ ДРУГОЙ КАРТЫ МЕНЯЙТЕ ТОЛЬКО ЭТОТ БЛОК!)
+// НАСТРОЙКИ ТЕКУЩЕЙ КАРТЫ
 // =========================================================================
 const CURRENT_MAP_CONFIG = {
-    id: "eidos7",                          // Уникальный ID карты (например: "xion", "eidos7", "wasteland")
-    name: "Эйдос 7 (Eidos 7)",                // Название карты
-    htmlFile: "eidos7.html",               // Имя этого HTML-файла для выпадающего списка
-    markersFile: "eidos7_data.json",
-    image: "maps/eidos-7.png",              // Путь к картинке карты
-    altImages: ["eidos-7.png", "maps/eidos7.png"],
-    width: 8194,                         // Ширина по умолчанию (автоматически обновится при загрузке картинки)
-    height: 7809                         // Высота по умолчанию (автоматически обновится при загрузке картинки)
+    id: "eidos-9",
+    name: "Эйдос 9 (Eidos 9)",
+    htmlFile: "eidos9.html",
+    markersFile: "stellar_blade_eidos-9_markers.json",
+    image: "maps/Eidos 9.png",
+    width: 8283,
+    height: 7725,
+    sourceWidth: 8192,
+    sourceHeight: 8192
 };
 localStorage.setItem("sb_last_map", CURRENT_MAP_CONFIG.htmlFile);
 
@@ -460,8 +465,6 @@ if (window.matchMedia("(max-width: 700px)").matches) {
     document.getElementById("sidebar-toggle-btn").textContent = "▶";
 }
 
-const EMBEDDED_MARKERS = window.EMBEDDED_MARKERS || [];
-
 function sanitizeMarkersList(list) {
     return list
         .filter(marker => marker && typeof marker === "object" && Number.isFinite(Number(marker.lat)) && Number.isFinite(Number(marker.lng)))
@@ -488,15 +491,6 @@ function setCloudSyncStatus(text) {
 }
 
 async function loadPreboundMarkers() {
-    if (Array.isArray(EMBEDDED_MARKERS) && EMBEDDED_MARKERS.length > 0) {
-        markersData = sanitizeMarkersList(EMBEDDED_MARKERS);
-        foundIds = normalizeFoundIds(foundIds);
-        saveMarkers();
-        renderMarkers();
-        renderFilters();
-        return;
-    }
-
     if (CURRENT_MAP_CONFIG.markersFile) {
         const rawName = CURRENT_MAP_CONFIG.markersFile;
         // Пробуем разные варианты кодирования пробелов и восклицательного знака для GitHub Pages
@@ -514,7 +508,11 @@ async function loadPreboundMarkers() {
                     const json = await response.json();
                     const list = Array.isArray(json) ? json : json.markers;
                     if (Array.isArray(list) && list.length > 0) {
-                        const fileMarkers = sanitizeMarkersList(list);
+                        const fileMarkers = sanitizeMarkersList(list).map(marker => ({
+                            ...marker,
+                            lat: Number((marker.lat * CURRENT_MAP_CONFIG.height / CURRENT_MAP_CONFIG.sourceHeight).toFixed(2)),
+                            lng: Number((marker.lng * CURRENT_MAP_CONFIG.width / CURRENT_MAP_CONFIG.sourceWidth).toFixed(2))
+                        }));
                         const cached = loadJSON(STORAGE_KEY_MARKERS, []);
                         const customUserMarkers = Array.isArray(cached) ? cached.filter(marker => marker && marker.imported === false) : [];
                         markersData = fileMarkers.concat(customUserMarkers);
@@ -1003,7 +1001,7 @@ function importData(event) {
                 return {
                     ...m,
                     id:m.id ?? makeUniqueId(),
-                    // Принудительно ставим ID текущей карты, чтобы метки Ксиона никогда не улетали в Эйдос 7!
+                    // Принудительно привязываем импортированные метки к текущей карте.
                     map:CURRENT_MAP_CONFIG.id,
                     lat:Number(m.lat),
                     lng:Number(m.lng),
