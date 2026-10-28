@@ -2,7 +2,7 @@
 
 Фанатский проект сообщества BroskiPlay для исследования локаций Stellar Blade, поиска коллекционных предметов и отслеживания игрового прогресса.
 
-**Сайт проекта:** [broskiplay.github.io/stellar-blade-intmap](https://broskiplay.github.io/stellar-blade-intmap/)
+**Главная страница проекта:** [broskiplay.ru](https://broskiplay.ru/)
 
 > Проект не связан с SHIFT UP Corporation или Sony Interactive Entertainment и не является официальным продуктом игры.
 
