@@ -12,6 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="./ui-feedback.js" defer></script>
 <style>
 :root {
     --page: #090c12;
@@ -141,7 +142,15 @@ details.game-dropdown:hover .game-banner-image, details.game-dropdown:focus-with
 .game-info {
     padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
 }
+.theme-stellar .game-info { gap: 14px; }
+.game-title-block { display: grid; gap: 8px; min-width: 0; }
 .game-title { font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0; color: #fff; }
+.game-progress { width: min(190px, 42vw); display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 5px 10px; }
+.game-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
+.game-progress-heading strong { color: var(--acid); font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 12px; }
+.game-progress-track { height: 5px; overflow: hidden; background: #303945; border-radius: 999px; }
+.game-progress-track > span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--acid)); box-shadow: 0 0 10px rgba(199, 255, 63, .42); transition: width .45s ease; }
+.game-progress-count { color: #768698; font-size: 9px; white-space: nowrap; }
 .game-arrow { display: flex; color: var(--game-accent); transition: transform .25s; }
 .game-arrow svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
@@ -165,8 +174,9 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
 .map-link:hover {
     background: #202a32; border-color: var(--game-accent); color: var(--game-accent); transform: translateX(4px);
 }
-.map-link span.status { font-size: 11px; color: #8a99ad; font-weight: normal; }
+.map-link span.status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 11px; color: #8a99ad; font-weight: normal; }
 .map-link span.status svg { width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.map-progress { color: var(--game-accent); font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 10px; font-weight: 700; }
 .map-name { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
 .map-marker { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: var(--game-accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .game-placeholder {
@@ -207,6 +217,19 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
 .game-placeholder:nth-child(2) { animation-delay: .08s; }
 .game-placeholder:nth-child(3) { animation-delay: .16s; }
 .game-placeholder:nth-child(4) { animation-delay: .24s; }
+.loading-screen {
+    position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+    padding: 20px; background: rgba(5, 8, 13, .94); backdrop-filter: blur(12px);
+}
+.loading-screen[hidden] { display: none; }
+.loading-panel { width: min(100%, 430px); padding: 26px; border: 1px solid #3b4a57; border-left: 3px solid var(--cyan); border-radius: 8px; background: linear-gradient(145deg, #171f29, #0d1219); box-shadow: 0 0 42px rgba(84, 220, 255, .12); }
+.loading-eyebrow { margin-bottom: 10px; color: var(--cyan); font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 10px; font-weight: 700; }
+.loading-title { color: #f4f8fc; font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 24px; font-weight: 700; }
+.loading-tip { min-height: 42px; margin-top: 12px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.loading-track { height: 4px; margin-top: 20px; overflow: hidden; background: #2a3541; }
+.loading-track span { display: block; width: 38%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--acid)); box-shadow: 0 0 14px rgba(84, 220, 255, .55); animation: loading-sweep .8s ease-in-out infinite alternate; }
+.loading-caption { display: block; margin-top: 10px; color: #708090; font-family: 'Oxanium', 'Segoe UI', sans-serif; font-size: 9px; }
+@keyframes loading-sweep { to { transform: translateX(165%); } }
 @media (max-width: 680px) {
     body { padding: 44px 18px; }
     .games-container { grid-template-columns: 1fr; gap: 14px; }
@@ -219,6 +242,10 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
     .game-banner { height: 160px; }
     .map-link { min-height: 48px; padding: 10px; }
     .map-link span.status { white-space: nowrap; margin-left: 8px; }
+    .theme-stellar .game-info { padding: 14px 12px; gap: 8px; }
+    .game-progress { width: min(160px, 42vw); }
+    .game-indicators { gap: 6px; }
+    .game-badge { padding: 5px 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
@@ -279,7 +306,14 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
                     <img class="game-banner-image" src="./stellar-blade-map/maps/stellar-blade-logo.png" alt="Stellar Blade — выбрать локацию">
                 </div>
                 <div class="game-info">
-                    <span class="game-title">Stellar Blade</span>
+                    <div class="game-title-block">
+                        <span class="game-title">Stellar Blade</span>
+                        <div class="game-progress">
+                            <div class="game-progress-heading"><span>Найдено меток</span><strong id="stellar-progress-value">—%</strong></div>
+                            <div class="game-progress-track" id="stellar-progress-bar" role="progressbar" aria-label="Общий прогресс Stellar Blade" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="stellar-progress-fill"></span></div>
+                            <span class="game-progress-count" id="stellar-progress-count">Загрузка меток...</span>
+                        </div>
+                    </div>
                     <span class="game-indicators">
                         <span class="game-badge">9 карт</span>
                         <span class="game-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
@@ -359,6 +393,16 @@ details.game-dropdown[open] .game-arrow { transform: rotate(180deg); }
     </section>
 </main>
 
+<div class="loading-screen" id="map-loading-screen" role="status" aria-live="polite" hidden>
+    <div class="loading-panel">
+        <p class="loading-eyebrow">BroskiPlay · загрузка локации</p>
+        <h2 class="loading-title" id="map-loading-title">Подготовка карты</h2>
+        <p class="loading-tip" id="map-loading-tip"></p>
+        <div class="loading-track" aria-hidden="true"><span></span></div>
+        <span class="loading-caption">СИНХРОНИЗАЦИЯ ДАННЫХ И МАРКЕРОВ</span>
+    </div>
+</div>
+
 <script>
 const mapLinks = [...document.querySelectorAll(".map-link")];
 let savedMap = null;
@@ -387,6 +431,134 @@ if (savedMap && mapLinks.length) {
         document.getElementById("last-map").hidden = false;
     }
 }
+
+const stellarMapConfigs = [
+    { id: "eidos7", page: "eidos7.html", markersFile: "eidos7_data.json" },
+    { id: "xion", page: "xion.html", markersFile: "xion_data.json" },
+    { id: "wasteland", page: "wasteland.html", markersFile: "wasteland_data.json" },
+    { id: "altess-levoire", page: "altess_levoire.html", markersFile: "altess_levoire_data.json" },
+    { id: "matrix-11", page: "matrix11.html", markersFile: "stellar_blade_matrix-11_markers.json" },
+    { id: "great-desert", page: "great_desert.html", markersFile: "stellar_blade_great-desert_markers.json" },
+    { id: "abyss-levoire", page: "abyss_levoire.html", markersFile: "stellar_blade_abyss-levoire_markers.json" },
+    { id: "spire-4", page: "spire4.html", markersFile: "stellar_blade_spire-4_markers.json" },
+    { id: "eidos-9", page: "eidos9.html", markersFile: "stellar_blade_eidos-9_markers.json" }
+];
+const mapDataPromises = new Map();
+
+function readLocalArray(key) {
+    try {
+        const value = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(value) ? value : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function loadMarkerIds(config) {
+    if (!mapDataPromises.has(config.id)) {
+        const promise = fetch(`./stellar-blade-map/${config.markersFile}`)
+            .then(response => {
+                if (!response.ok) throw new Error(`Не удалось загрузить ${config.markersFile}`);
+                return response.json();
+            })
+            .then(data => Array.isArray(data) ? data : data.markers)
+            .then(markers => Array.isArray(markers) ? markers : []);
+        mapDataPromises.set(config.id, promise);
+    }
+    return mapDataPromises.get(config.id);
+}
+
+async function renderStellarProgress(cloudProgress = new Map()) {
+    const results = await Promise.all(stellarMapConfigs.map(async config => {
+        const link = mapLinks.find(item => new URL(item.href).pathname.endsWith(`/${config.page}`));
+        const name = link?.querySelector(".map-name")?.textContent.trim() || config.page;
+        const ids = new Set();
+        try {
+            const markers = await loadMarkerIds(config);
+            markers.forEach(marker => {
+                if (marker?.id != null) ids.add(String(marker.id));
+            });
+        } catch (error) {
+            console.warn(`Не удалось загрузить метки карты ${config.page}:`, error);
+        }
+        readLocalArray(`sb_markers_${config.id}`).forEach(marker => {
+            if (marker?.id != null) ids.add(String(marker.id));
+        });
+
+        const foundIds = new Set([
+            ...readLocalArray(`sb_found_${config.id}`),
+            ...(cloudProgress.get(config.id) || [])
+        ].map(String));
+        const found = [...ids].filter(id => foundIds.has(id)).length;
+        const total = ids.size;
+        const percent = total ? Math.round(found / total * 100) : null;
+        const progressLabel = link?.querySelector(".status");
+        if (progressLabel) {
+            let progress = progressLabel.querySelector(".map-progress");
+            if (!progress) {
+                progress = document.createElement("span");
+                progress.className = "map-progress";
+                progressLabel.prepend(progress);
+            }
+            progress.textContent = percent === null ? "—" : `${percent}%`;
+            link.title = percent === null
+                ? `${name}: прогресс пока недоступен`
+                : `${name}: ${found} из ${total} меток, ${percent}% исследовано`;
+        }
+        return { found, total };
+    }));
+
+    const found = results.reduce((sum, item) => sum + item.found, 0);
+    const total = results.reduce((sum, item) => sum + item.total, 0);
+    const percent = total ? Math.round(found / total * 100) : null;
+    const value = document.getElementById("stellar-progress-value");
+    const count = document.getElementById("stellar-progress-count");
+    const fill = document.getElementById("stellar-progress-fill");
+    const bar = document.getElementById("stellar-progress-bar");
+    if (value) value.textContent = percent === null ? "—%" : `${percent}%`;
+    if (count) count.textContent = total ? `${found} / ${total} меток` : "Прогресс пока недоступен";
+    if (fill) fill.style.width = `${percent ?? 0}%`;
+    if (bar) bar.setAttribute("aria-valuenow", String(percent ?? 0));
+}
+
+window.refreshStellarProgress = async user => {
+    const cloudProgress = new Map();
+    if (user) {
+        const db = firebase.firestore();
+        await Promise.all(stellarMapConfigs.map(async config => {
+            try {
+                const snapshot = await db.collection("users").doc(user.uid)
+                    .collection("mapProgress").doc(config.id).get();
+                const data = snapshot.exists ? snapshot.data() : null;
+                cloudProgress.set(config.id, Array.isArray(data?.foundIds) ? data.foundIds : Array.isArray(data?.found) ? data.found : []);
+            } catch (error) {
+                cloudProgress.set(config.id, []);
+            }
+        }));
+    }
+    await renderStellarProgress(cloudProgress);
+};
+renderStellarProgress();
+
+const loadingTips = [
+    "Отмечайте найденные метки прямо в карточке: прогресс сохранится автоматически.",
+    "Правый клик по метке на карте быстро отмечает её найденной.",
+    "Используйте фильтры категорий, чтобы быстрее находить нужные предметы.",
+    "Войдите через Google, чтобы синхронизировать личный прогресс между устройствами."
+];
+const loadingScreen = document.getElementById("map-loading-screen");
+[...mapLinks, document.getElementById("last-map-link")].forEach(link => {
+    link.addEventListener("click", event => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        const mapName = link.querySelector(".map-name")?.textContent.trim()
+            || document.getElementById("last-map-name").textContent.trim();
+        document.getElementById("map-loading-title").textContent = mapName || "Подготовка карты";
+        document.getElementById("map-loading-tip").textContent = loadingTips[Math.floor(Math.random() * loadingTips.length)];
+        loadingScreen.hidden = false;
+        window.setTimeout(() => window.location.assign(link.href), 650);
+    });
+});
 </script>
 <script>
 const firebaseConfig = {
@@ -421,6 +593,9 @@ auth.onAuthStateChanged((user) => {
         btnEl.classList.remove("logout");
         avatarEl.style.display = "none";
     }
+    window.refreshStellarProgress(user).catch((error) => {
+        console.warn("Не удалось обновить общий прогресс Stellar Blade:", error);
+    });
 });
 
 function toggleGoogleAuth() {
