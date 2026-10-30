@@ -6,10 +6,6 @@
     <link rel="icon" type="image/png" href="avatar-favicon.png">
     <title>Интерактивная карта Stellar Blade — BroskiPlay</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -21,6 +17,19 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <link rel="stylesheet" href="css/map-theme.css">
+
+    <!-- Применяем сохранённую/системную тему до отрисовки (защита от мигания) -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("bp_theme");
+                var theme = saved === "light" || saved === "dark"
+                    ? saved
+                    : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (e) {}
+        })();
+    </script>
 </head>
 
 <body>

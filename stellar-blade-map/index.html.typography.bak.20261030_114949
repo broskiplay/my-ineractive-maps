@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="avatar-favicon.png">
+    <title>Интерактивная карта Stellar Blade — BroskiPlay</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="cloud-sync.js"></script>
+    <script src="map-access.js"></script>
+    <script src="../ui-feedback.js" defer></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" href="css/map-theme.css">
+
+    <!-- Применяем сохранённую/системную тему до отрисовки (защита от мигания) -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("bp_theme");
+                var theme = saved === "light" || saved === "dark"
+                    ? saved
+                    : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (e) {}
+        })();
+    </script>
+</head>
+
+<body>
+
+<div id="sidebar">
+    <div class="sidebar-header">
+        <div class="header-top-row">
+            <h1>Интерактивная карта Stellar Blade</h1>
+            <a href="https://broskiplay.ru/" class="home-back-btn" title="На главную">Главная</a>
+        </div>
+
+        <div class="social-links">
+            <a href="https://www.twitch.tv/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-twitch">
+                <svg viewBox="0 0 24 24"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+                <span>Twitch</span>
+            </a>
+            <a href="https://youtube.com/@broskiplayt" target="_blank" rel="noopener noreferrer" class="social-btn social-youtube">
+                <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                <span>YouTube</span>
+            </a>
+            <a href="https://www.donationalerts.com/r/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-donate">☕ ПОДДЕРЖАТЬ</a>
+        </div>
+
+        <div class="auth-mini-box">
+            <div class="auth-mini-info">
+                <img id="auth-avatar" class="auth-mini-avatar" src="" alt="Аватар">
+                <div id="auth-status" class="auth-mini-text">
+                    <b>Локальный режим</b><br><span>Синхронизация выключена</span>
+                </div>
+            </div>
+            <button id="auth-btn" class="primary auth-mini-btn" data-action="toggle-google-auth">🔑 Google</button>
+        </div>
+
+        <button id="cloud-sync-btn" class="cloud-sync-btn" data-action="sync-progress-cloud">☁️ Синхронизировать прогресс</button>
+        <div id="cloud-sync-status" class="cloud-sync-status" aria-live="polite"></div>
+
+        <div class="autosave-indicator">
+            <span>🔄 Автосохранение: локально + облако</span>
+            <span id="autosave-time"></span>
+        </div>
+    </div>
+
+    <div class="section">
+        <select id="page-nav-selector" data-nav>
+            <option value="index.html?map=eidos7">🗺 Эйдос 7</option>
+            <option value="index.html?map=xion">🗺 Город Ксион</option>
+            <option value="index.html?map=wasteland">🗺 Пустошь</option>
+            <option value="index.html?map=altess-levoire">🗺 Атлесс Левуар</option>
+            <option value="index.html?map=matrix-11">🗺 Матрица 11</option>
+            <option value="index.html?map=great-desert">🗺 Великая пустыня</option>
+            <option value="index.html?map=abyss-levoire">🗺 Бездна Левуар</option>
+            <option value="index.html?map=spire-4">🗺 Шпиль 4</option>
+            <option value="index.html?map=eidos-9">🗺 Эйдос 9</option>
+        </select>
+
+        <input type="text" id="search-input" placeholder="🔍 Поиск по названию или описанию...">
+
+        <div style="font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;font-family:var(--font-heading);">
+            <span>Собрано на локации:</span>
+            <b id="progress-counter" style="color:var(--accent-cyan);">0 / 0</b>
+        </div>
+    </div>
+
+    <div class="section">
+        <button id="toggle-add-btn" data-action="toggle-add-mode" style="margin-bottom:8px;">+ Добавить свою метку на карту</button>
+
+        <details class="submenu owner-only" data-owner-only hidden>
+            <summary>⚙️ Настройки и управление метками</summary>
+            <div class="submenu-body">
+                <div class="panel-note" data-owner-only hidden>💡 Зажмите <b>Ctrl</b> и перетащите метку, чтобы вручную настроить её положение.</div>
+
+                <details class="nested-menu">
+                    <summary>🔧 Подгонка и масштаб всех меток</summary>
+                    <div class="nested-body">
+                        <div class="calib-row"><span>Сдвиг по X:</span>
+                            <button data-action="shift-all" data-dx="-75" data-dy="0">◀◀</button>
+                            <button data-action="shift-all" data-dx="-15" data-dy="0">◀</button>
+                            <button data-action="shift-all" data-dx="15"  data-dy="0">▶</button>
+                            <button data-action="shift-all" data-dx="75"  data-dy="0">▶▶</button>
+                        </div>
+                        <div class="calib-row"><span>Сдвиг по Y:</span>
+                            <button data-action="shift-all" data-dx="0" data-dy="75">▲▲</button>
+                            <button data-action="shift-all" data-dx="0" data-dy="15">▲</button>
+                            <button data-action="shift-all" data-dx="0" data-dy="-15">▼</button>
+                            <button data-action="shift-all" data-dx="0" data-dy="-75">▼▼</button>
+                        </div>
+                        <div class="calib-row"><span>Ширина (X):</span>
+                            <button data-action="scale-axis" data-fx="0.98" data-fy="1">➖ Уже</button>
+                            <button data-action="scale-axis" data-fx="1.02" data-fy="1">➕ Шире</button>
+                        </div>
+                        <div class="calib-row"><span>Высота (Y):</span>
+                            <button data-action="scale-axis" data-fx="1" data-fy="0.98">➖ Ниже</button>
+                            <button data-action="scale-axis" data-fx="1" data-fy="1.02">➕ Выше</button>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="nested-menu">
+                    <summary>📌 Управление импортированными метками</summary>
+                    <div class="nested-body">
+                        <label for="shift-step" style="display:block;margin-bottom:4px;color:var(--text-muted);">Шаг сдвига (пиксели):</label>
+                        <input type="number" id="shift-step" value="25" min="1" step="1">
+                        <div class="calib-row"><span>По X:</span>
+                            <button data-action="shift-imported" data-dx="-1" data-dy="0">◀</button>
+                            <button data-action="shift-imported" data-dx="1"  data-dy="0">▶</button>
+                        </div>
+                        <div class="calib-row"><span>По Y:</span>
+                            <button data-action="shift-imported" data-dx="0" data-dy="1">▲</button>
+                            <button data-action="shift-imported" data-dx="0" data-dy="-1">▼</button>
+                        </div>
+                        <hr style="border-color:rgba(255,255,255,0.08);margin:8px 0;">
+                        <button data-action="mirror-x">⇄ Отразить по X</button>
+                        <button data-action="mirror-y">⇅ Отразить по Y</button>
+                        <button data-action="reset-imported-transforms">↩ Сбросить</button>
+                        <hr style="border-color:rgba(255,255,255,0.08);margin:8px 0;">
+                        <button data-action="reload-default-markers" class="primary">🔄 Перезагрузить метки</button>
+                        <button data-action="delete-imported-markers" style="background:rgba(192, 57, 43, 0.4);border-color:#c0392b;">🗑 Удалить импортированные</button>
+                    </div>
+                </details>
+
+                <details class="nested-menu">
+                    <summary>🗂 База меток (JSON)</summary>
+                    <div class="nested-body">
+                        <div class="panel-note">Импорт автоматически привязывает метки к этой карте.</div>
+                        <div class="btn-group">
+                            <button data-action="export-data">💾 Сохранить</button>
+                            <button data-action="trigger-import-markers" class="primary">📂 Импорт</button>
+                        </div>
+                        <input type="file" id="import-file" style="display:none" accept=".json,application/json">
+                    </div>
+                </details>
+            </div>
+        </details>
+
+        <details class="submenu">
+            <summary>💾 Сохранение выполненных меток</summary>
+            <div class="submenu-body">
+                <div class="panel-label">Прогресс этой карты:</div>
+                <div class="btn-group" style="margin-bottom:6px;">
+                    <button class="success" data-action="export-found">💾 Сохранить</button>
+                    <button class="primary" data-action="trigger-import-found">📂 Загрузить</button>
+                </div>
+                <input type="file" id="import-found-file" style="display:none" accept=".json,application/json">
+                <div class="btn-group" style="margin-bottom:6px;">
+                    <button data-action="save-checkpoint">📌 Чекпоинт</button>
+                    <button data-action="load-checkpoint">🔄 Из кэша</button>
+                </div>
+                <button data-action="reset-found" style="background:rgba(146, 43, 33, 0.35);border-color:#7d3434;font-size:11px;padding:6px;">✖ Сбросить прогресс</button>
+                <div id="status-msg" class="status-msg"></div>
+            </div>
+        </details>
+
+        <div class="btn-group">
+            <button data-action="set-all-categories" data-state="true">👁 Показать все</button>
+            <button data-action="set-all-categories" data-state="false">🙈 Скрыть все</button>
+        </div>
+        <div class="btn-group" style="margin-top: 8px;">
+            <button id="hide-found-markers-btn" data-action="toggle-found-visibility" aria-pressed="false">🙈 Скрыть отмеченные</button>
+        </div>
+    </div>
+
+    <div class="filters-list" id="filters-container"></div>
+</div>
+
+<button id="sidebar-toggle-btn" data-action="toggle-sidebar" title="Скрыть / показать меню">◀</button>
+
+<div id="map"></div>
+
+<noscript>
+    <div style="padding:24px;color:#edf2f7;background:#090c12;min-height:100vh;">
+        Включите JavaScript для работы интерактивной карты.
+    </div>
+</noscript>
+
+<script type="module" src="js/boot.js"></script>
+
+</body>
+</html>

@@ -144,7 +144,7 @@ function makeFallbackGrid(w, h, fileName) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
   }
   ctx.fillStyle = "#00f0ff";
-  ctx.font = "bold 20px 'Orbitron', sans-serif";
+  ctx.font = "600 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(`Положите файл "${fileName}" в папку`, canvas.width / 2, canvas.height / 2);
   return canvas.toDataURL();
