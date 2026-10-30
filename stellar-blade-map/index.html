@@ -11,12 +11,16 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="cloud-sync.js"></script>
     <script src="map-access.js"></script>
-    <script src="../ui-feedback.js" defer></script>
+    <script src="../ui-feedback.js?v=2" defer></script>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <link rel="stylesheet" href="css/map-theme.css">
+    <!-- Шрифты: Unbounded (заголовки), Manrope (основной), Onest (описания), Golos Text (метки) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Onest:wght@400;500;600&family=Unbounded:wght@500;600;700&display=swap">
+    <link rel="stylesheet" href="css/map-theme.css?v=7">
 
     <!-- Применяем сохранённую/системную тему до отрисовки (защита от мигания) -->
     <script>
@@ -38,7 +42,7 @@
     <div class="sidebar-header">
         <div class="header-top-row">
             <h1>Интерактивная карта Stellar Blade</h1>
-            <a href="https://broskiplay.ru/" class="home-back-btn" title="На главную">Главная</a>
+            <a href="https://broskiplay.ru/" class="home-back-btn" title="На главную"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Главная</span></a>
         </div>
 
         <div class="social-links">
@@ -50,7 +54,10 @@
                 <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                 <span>YouTube</span>
             </a>
-            <a href="https://www.donationalerts.com/r/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-donate">☕ ПОДДЕРЖАТЬ</a>
+            <a href="https://www.donationalerts.com/r/broskiplay" target="_blank" rel="noopener noreferrer" class="social-btn social-donate">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.8a4.3 4.3 0 0 1 7.5 2.7c0 5.4-7.5 10-7.5 10Z"/></svg>
+                <span>ПОДДЕРЖАТЬ</span>
+            </a>
         </div>
 
         <div class="auth-mini-box">
@@ -60,7 +67,7 @@
                     <b>Локальный режим</b><br><span>Синхронизация выключена</span>
                 </div>
             </div>
-            <button id="auth-btn" class="primary auth-mini-btn" data-action="toggle-google-auth">🔑 Google</button>
+            <button id="auth-btn" class="primary auth-mini-btn" data-action="toggle-google-auth"><svg class="google-icon" width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Google</span></button>
         </div>
 
         <button id="cloud-sync-btn" class="cloud-sync-btn" data-action="sync-progress-cloud">☁️ Синхронизировать прогресс</button>

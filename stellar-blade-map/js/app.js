@@ -7,8 +7,70 @@ import { connectCloud, pushProgress } from "./cloud.js";
 import { debounce } from "./utils.js";
 import { saveJSON, storageKeys } from "./storage.js";
 
+// ВАЖНО: Leaflet подключается в index.html обычным тегом <script> и живёт
+// в глобальной переменной window.L. Здесь нельзя писать `import L from "leaflet"`:
+// в браузере без import map такая строка ломает загрузку всего модуля
+// («Failed to resolve module specifier "leaflet"»), и карта с метками не рисуется.
+const ZOOM_SNAP = 0.25;
+const DEFAULT_MAX_ZOOM = 1;
+const LEAFLET_CDNS = [
+  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+  "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js",
+];
+
+let L = window.L || null;
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Не удалось загрузить ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+// Если CDN в <head> не ответил (сеть/блокировщик), пробуем резервные зеркала.
+async function ensureLeaflet() {
+  if (L) return L;
+  for (const src of LEAFLET_CDNS) {
+    try {
+      await loadScript(src);
+    } catch (err) {
+      console.warn("Leaflet:", err.message);
+    }
+    if (window.L) {
+      L = window.L;
+      return L;
+    }
+  }
+  return null;
+}
+
 export async function initApp(config) {
   const state = createState(config);
+
+  const leaflet = await ensureLeaflet();
+  if (!leaflet) {
+    showMapError(
+      "Не удалось загрузить библиотеку Leaflet. Проверьте соединение с интернетом и обновите страницу."
+    );
+    return null;
+  }
+
+  // Инициализируем карту ПРОВЕРЕННО: Leaflet должен быть загружен,
+  // а state.config.width/height уже известны.
+  state.mapInstance = L.map("map", {
+    crs: L.CRS.Simple,
+    minZoom: -2,
+    maxZoom: config.maxZoom ?? DEFAULT_MAX_ZOOM,
+    zoomSnap: ZOOM_SNAP,
+    zoomDelta: ZOOM_SNAP,
+    maxBoundsViscosity: 1.0,
+    attributionControl: false,
+  });
+  window.__mapInstance = state.mapInstance;
 
   // Привязываем элементы управления до загрузки картинки и базы меток:
   // меню карт, поиск и фильтры должны работать даже при медленной сети
@@ -21,15 +83,6 @@ export async function initApp(config) {
   if (selector) {
     selector.value = `index.html?map=${config.id}`;
   }
-
-  state.mapInstance = L.map("map", {
-    crs: L.CRS.Simple,
-    minZoom: -5,
-    maxZoom: 4,
-    zoomSnap: 0.25,
-    attributionControl: false,
-  });
-  window.__mapInstance = state.mapInstance;
 
   state.markersLayer = L.layerGroup().addTo(state.mapInstance);
   state.scheduleCloudSync = debounce(() => pushProgress(state), 2000);
@@ -86,6 +139,89 @@ function autosave(state) {
   }
 }
 
+function showMapError(message) {
+  const container = document.getElementById("map");
+  if (!container) return;
+  container.innerHTML = "";
+  const box = document.createElement("div");
+  box.style.cssText = [
+    "position:absolute", "inset:0", "display:flex", "align-items:center",
+    "justify-content:center", "padding:32px", "text-align:center",
+    "font:500 16px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif",
+    "color:#edf2f7", "background:#0a0d14",
+  ].join(";");
+  box.textContent = message;
+  container.appendChild(box);
+}
+
+// ---------- Пределы зума ----------
+// Ключевое: минимальный зум считается от размеров окна, поэтому карту нельзя
+// отдалить до крошечного пятна, а максимальный берётся из config.js, чтобы
+// не разглядывать растянутые пиксели.
+function snapFloor(value) {
+  return Math.round((Math.floor(value / ZOOM_SNAP) * ZOOM_SNAP) * 100) / 100;
+}
+
+export function applyZoomLimits(state) {
+  const map = state.mapInstance;
+  const cfg = state.config;
+  if (!map || !cfg || !cfg.width || !cfg.height) return null;
+
+  const size = map.getSize();
+  if (!size.x || !size.y) return null;
+
+  // Зум, при котором карта целиком вписывается в видимую область окна.
+  const fitZoom = Math.min(
+    Math.log2(size.x / cfg.width),
+    Math.log2(size.y / cfg.height)
+  );
+
+  // Отдаление: не дальше, чем «вся карта на экране» (с минимальным отступом).
+  const minZoom = snapFloor(fitZoom - ZOOM_SNAP / 2);
+
+  // Приближение: по умолчанию не более 2× от нативной чёткости картинки.
+  const maxZoom = Math.max(cfg.maxZoom ?? DEFAULT_MAX_ZOOM, minZoom + ZOOM_SNAP);
+
+  state.zoomLimits = { minZoom, maxZoom, fitZoom };
+  map.setMinZoom(minZoom);
+  map.setMaxZoom(maxZoom);
+  applyMaxBounds(state);
+  return state.zoomLimits;
+}
+
+// ---------- Область видимости ----------
+// Ограничивает перемещение карты прямоугольником картинки (плюс небольшой отступ),
+// чтобы её нельзя было утащить в пустоту. Отступ — доля от размера карты,
+// настраивается через config.boundsPadding (по умолчанию 5%).
+// «Жёсткость» границы задаётся maxBoundsViscosity: 1 в параметрах L.map.
+const DEFAULT_BOUNDS_PADDING = 0.05;
+
+function applyMaxBounds(state) {
+  const map = state.mapInstance;
+  const cfg = state.config;
+  if (!map || !cfg || !cfg.width || !cfg.height) return;
+
+  const pad = cfg.boundsPadding ?? DEFAULT_BOUNDS_PADDING;
+  const padX = cfg.width * pad;
+  const padY = cfg.height * pad;
+  const bounds = L.latLngBounds(
+    [-padY, -padX],
+    [cfg.height + padY, cfg.width + padX]
+  );
+
+  state.maxBounds = bounds;
+  // setMaxBounds сам вернёт карту внутрь границ, если вид уже задан;
+  // до первого fitBounds (центра ещё нет) он ничего не двигает и не падает.
+  map.setMaxBounds(bounds);
+}
+
+function bindZoomLimitSync(state) {
+  const sync = () => applyZoomLimits(state);
+  state.mapInstance.on("resize", sync);
+  window.addEventListener("resize", sync);
+  window.addEventListener("orientationchange", () => setTimeout(sync, 250));
+}
+
 function loadMapImage(state) {
   const cfg = state.config;
   const candidates = [cfg.image, ...(cfg.altImages || [])];
@@ -100,12 +236,14 @@ function loadMapImage(state) {
         const url = makeFallbackGrid(cfg.width, cfg.height, cfg.image);
         const bounds = [[0, 0], [cfg.height, cfg.width]];
         state.imageOverlay = L.imageOverlay(url, bounds).addTo(state.mapInstance);
+        bindZoomLimitSync(state);
+        applyZoomLimits(state);
         state.mapInstance.fitBounds(bounds);
         resolve();
         return;
       }
       const src = candidates[i++];
-      
+
       const img = new Image();
       img.onload = () => {
         console.log(`✅ App: Картинка успешно загружена: ${src}`);
@@ -115,6 +253,8 @@ function loadMapImage(state) {
         }
         const bounds = [[0, 0], [cfg.height, cfg.width]];
         state.imageOverlay = L.imageOverlay(src, bounds).addTo(state.mapInstance);
+        bindZoomLimitSync(state);
+        applyZoomLimits(state);
         state.mapInstance.fitBounds(bounds);
         resolve();
       };

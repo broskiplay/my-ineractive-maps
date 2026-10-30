@@ -82,6 +82,44 @@ export function normalizeFoundIds(state) {
   return Array.from(new Set(ids.map((id) => markerIds.get(String(id)) ?? String(id))));
 }
 
+// ---------- Popup visibility ----------
+// Метки у края карты: maxBounds (вязкость 1) не даёт сдвинуть карту настолько,
+// чтобы попап целиком поместился. На время показа попапа расширяем границы
+// на его высоту и повторяем автопрокрутку (в т.ч. после загрузки картинки).
+function revealPopup(state, popup) {
+  const map = state.mapInstance;
+  if (!map || !state.maxBounds) return;
+  clearTimeout(state.popupBoundsTimer);
+
+  const fit = () => {
+    if (!map.hasLayer(popup)) return;
+    const el = popup.getElement();
+    const px = (el ? el.offsetHeight : 320) + 100;
+    const pad = px / Math.pow(2, map.getZoom());
+    const sw = state.maxBounds.getSouthWest();
+    const ne = state.maxBounds.getNorthEast();
+    map.setMaxBounds(L.latLngBounds(
+      [sw.lat - pad, sw.lng - pad],
+      [ne.lat + pad, ne.lng + pad]
+    ));
+    popup.update();
+    popup._adjustPan?.();
+  };
+
+  fit();
+  popup.getElement()?.querySelectorAll("img").forEach((img) => {
+    if (!img.complete) img.addEventListener("load", fit, { once: true });
+  });
+}
+
+function restoreBounds(state) {
+  clearTimeout(state.popupBoundsTimer);
+  // Отложено: при переключении между метками popupopen отменит возврат.
+  state.popupBoundsTimer = setTimeout(() => {
+    if (state.maxBounds) state.mapInstance.setMaxBounds(state.maxBounds);
+  }, 0);
+}
+
 // ---------- Render ----------
 export function renderMarkers(state) {
   if (!state.markersLayer) return;
@@ -114,23 +152,33 @@ export function renderMarkers(state) {
     const lMarker = L.marker([marker.lat, marker.lng], { icon });
 
     const popupHtml = `
-      <div>
-        <div class="popup-cat">${cat.svg} ${esc(cat.name)}</div>
-        <div class="popup-title">${esc(marker.title || cat.name)}</div>
+      <div class="popup-card ${isFound ? "is-found" : ""}" style="--cat:${cat.color}">
+        <div class="popup-head">
+          <span class="popup-icon">${cat.svg}</span>
+          <div class="popup-head-text">
+            <div class="popup-cat">${esc(cat.name)}</div>
+            <div class="popup-title">${esc(marker.title || cat.name)}</div>
+          </div>
+        </div>
+        ${isFound ? `<div class="popup-status">✔ Найдено</div>` : ""}
+        ${marker.img ? `<img src="${esc(marker.img)}" class="popup-img" alt="" onclick="window.open(this.src,'_blank')">` : ""}
         ${marker.desc ? `<div class="popup-desc">${esc(marker.desc)}</div>` : ""}
-        ${marker.img ? `<img src="${esc(marker.img)}" class="popup-img" onclick="window.open(this.src,'_blank')">` : ""}
         <div class="popup-actions">
           <button class="btn-found" data-found-id="${esc(marker.id)}">
             ${isFound ? "✖ Снять отметку" : "✔ Найдено!"}
           </button>
         </div>
       </div>`;
-      
+
     lMarker.bindPopup(popupHtml, {
-      maxHeight: 340,
+      maxWidth: 320,
+      maxHeight: 400,
       autoPanPaddingTopLeft: [20, 60],
       autoPanPaddingBottomRight: [20, 20]
     });
+
+    lMarker.on("popupopen", (e) => revealPopup(state, e.popup));
+    lMarker.on("popupclose", () => restoreBounds(state));
 
     lMarker.on("contextmenu", (e) => {
       e.originalEvent?.preventDefault();

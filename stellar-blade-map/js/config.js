@@ -2,6 +2,12 @@
 // sourceWidth / sourceHeight — размер исходного холста, в координатах которого
 // записаны метки в JSON. Если они не заданы, координаты уже в пикселях картинки.
 // При загрузке картинки app.js дополнительно сверяет width/height с naturalWidth/naturalHeight.
+//
+// maxZoom — предел приближения относительно нативной чёткости картинки
+// (CRS.Simple: 0 = 1 пиксель карты на 1 пиксель экрана, 1 = двукратное увеличение).
+// Минимальный зум жёстко не задаётся: app.js рассчитывает его от размера окна,
+// чтобы карту нельзя было отдалить меньше, чем «вся карта на экране».
+// Для маленьких картинок (Атлесс Левуар) предел приближения выше — иначе их не рассмотреть.
 export const MAP_CONFIGS = {
   eidos7: {
     id: "eidos7",
@@ -11,6 +17,7 @@ export const MAP_CONFIGS = {
     image: "maps/eidos7.png",
     altImages: ["maps/eidos-7.png"],
     width: 8194, height: 7809,
+    maxZoom: 1,
   },
   xion: {
     id: "xion",
@@ -20,6 +27,7 @@ export const MAP_CONFIGS = {
     image: "maps/xion.png",
     altImages: [],
     width: 9104, height: 7028,
+    maxZoom: 1,
   },
   wasteland: {
     id: "wasteland",
@@ -29,6 +37,7 @@ export const MAP_CONFIGS = {
     image: "maps/wasteland.png",
     altImages: [],
     width: 7159, height: 8937,
+    maxZoom: 1,
   },
   "altess-levoire": {
     id: "altess-levoire",
@@ -38,6 +47,8 @@ export const MAP_CONFIGS = {
     image: "maps/altess_levoire.png",
     altImages: ["maps/altess-levoire.png"],
     width: 768, height: 780,
+    // Картинка небольшая — разрешаем приближение до 4× от нативной чёткости.
+    maxZoom: 2,
   },
   "matrix-11": {
     id: "matrix-11",
@@ -47,8 +58,8 @@ export const MAP_CONFIGS = {
     image: "maps/matrix11.png",
     altImages: ["maps/matrix-11.png"],
     width: 7630, height: 8385,
-    // Метки в JSON заданы в координатах исходного холста 8192×8192.
     sourceWidth: 8192, sourceHeight: 8192,
+    maxZoom: 1,
   },
   "great-desert": {
     id: "great-desert",
@@ -59,6 +70,7 @@ export const MAP_CONFIGS = {
     altImages: ["maps/great-desert.png", "maps/Great Desert.png"],
     width: 8806, height: 7266,
     sourceWidth: 8192, sourceHeight: 8192,
+    maxZoom: 1,
   },
   "abyss-levoire": {
     id: "abyss-levoire",
@@ -69,6 +81,7 @@ export const MAP_CONFIGS = {
     altImages: ["maps/abyss-levoire.png"],
     width: 6585, height: 9716,
     sourceWidth: 8192, sourceHeight: 8192,
+    maxZoom: 1,
   },
   "spire-4": {
     id: "spire-4",
@@ -79,6 +92,7 @@ export const MAP_CONFIGS = {
     altImages: ["maps/spire-4.png"],
     width: 8333, height: 7678,
     sourceWidth: 8192, sourceHeight: 8192,
+    maxZoom: 1,
   },
   "eidos-9": {
     id: "eidos-9",
@@ -89,6 +103,7 @@ export const MAP_CONFIGS = {
     altImages: ["maps/eidos-9.png"],
     width: 8283, height: 7725,
     sourceWidth: 8192, sourceHeight: 8192,
+    maxZoom: 1,
   },
 };
 
