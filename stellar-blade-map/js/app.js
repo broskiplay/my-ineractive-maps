@@ -9,7 +9,6 @@ import { saveJSON, storageKeys } from "./storage.js";
 
 export async function initApp(config) {
   const state = createState(config);
-  const tiledMap = Boolean(config.tileLayer);
 
   // Привязываем элементы управления до загрузки картинки и базы меток:
   // меню карт, поиск и фильтры должны работать даже при медленной сети
@@ -24,54 +23,13 @@ export async function initApp(config) {
   }
 
   state.mapInstance = L.map("map", {
-    crs: tiledMap ? createTileCRS(config) : L.CRS.Simple,
-    minZoom: tiledMap ? config.tileLayer.minZoom : -5,
-    maxZoom: tiledMap ? config.tileLayer.maxZoom : 4,
+    crs: L.CRS.Simple,
+    minZoom: -5,
+    maxZoom: 4,
     zoomSnap: 0.25,
     attributionControl: false,
-    ...(tiledMap ? {
-      maxBounds: createPopupSafeBounds(config),
-      maxBoundsViscosity: 1,
-    } : {}),
   });
   window.__mapInstance = state.mapInstance;
-
-  if (tiledMap) {
-    state.mapInstance.on("zoomstart", () => state.mapInstance.setMaxBounds(null));
-    state.mapInstance.on("zoomend", () => {
-      state.mapInstance.setMaxBounds(createPopupSafeBounds(config, state.mapInstance.getZoom()));
-    });
-    state.mapInstance.on("popupopen", ({ popup }) => {
-      setTimeout(() => {
-        const popupElement = popup.getElement();
-        const mapElement = state.mapInstance.getContainer();
-        if (!popupElement || !mapElement) return;
-
-        const popupRect = popupElement.getBoundingClientRect();
-        const mapRect = mapElement.getBoundingClientRect();
-        const padding = 12;
-        let offsetX = 0;
-        let offsetY = 0;
-
-        if (popupRect.left < mapRect.left + padding) {
-          offsetX = popupRect.left - mapRect.left - padding;
-        } else if (popupRect.right > mapRect.right - padding) {
-          offsetX = popupRect.right - mapRect.right + padding;
-        }
-
-        if (popupRect.top < mapRect.top + padding) {
-          offsetY = popupRect.top - mapRect.top - padding;
-        } else if (popupRect.bottom > mapRect.bottom - padding) {
-          offsetY = popupRect.bottom - mapRect.bottom + padding;
-        }
-
-        if (offsetX || offsetY) {
-          state.mapInstance.stop();
-          state.mapInstance.panBy([offsetX, offsetY], { animate: false });
-        }
-      });
-    });
-  }
 
   state.markersLayer = L.layerGroup().addTo(state.mapInstance);
   state.scheduleCloudSync = debounce(() => pushProgress(state), 2000);
@@ -130,32 +88,6 @@ function autosave(state) {
 
 function loadMapImage(state) {
   const cfg = state.config;
-  if (cfg.tileLayer) {
-    const bounds = L.latLngBounds([[0, 0], [cfg.height, cfg.width]]);
-    const url = cfg.tileLayer.url;
-    const transparentTile = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    const layer = L.tileLayer(url, {
-      bounds,
-      minZoom: cfg.tileLayer.minZoom,
-      maxZoom: cfg.tileLayer.maxZoom,
-      maxNativeZoom: cfg.tileLayer.maxZoom,
-      noWrap: true,
-    });
-
-    layer.getTileUrl = (coords) => {
-      const zoomScale = Math.pow(2, coords.z - cfg.tileLayer.maxZoom);
-      const expectedColumns = Math.ceil((cfg.width * zoomScale) / 256);
-      // The supplied GDAL tiles stop at pixel 8192; the source image is 8194 px wide.
-      const availableColumns = Math.max(1, expectedColumns - 1);
-      if (coords.x >= availableColumns) return transparentTile;
-      return L.Util.template(url, coords);
-    };
-
-    state.imageOverlay = layer.addTo(state.mapInstance);
-    state.mapInstance.fitBounds(bounds);
-    return;
-  }
-
   const candidates = [cfg.image, ...(cfg.altImages || [])];
   let i = 0;
 
@@ -194,26 +126,6 @@ function loadMapImage(state) {
     };
     tryNext();
   });
-}
-
-function createTileCRS(config) {
-  const maxZoom = config.tileLayer.maxZoom;
-  return L.extend({}, L.CRS.Simple, {
-    scale: (zoom) => Math.pow(2, zoom - maxZoom),
-    zoom: (scale) => Math.log(scale) / Math.LN2 + maxZoom,
-    transformation: new L.Transformation(1, 0, -1, config.height),
-  });
-}
-
-function createPopupSafeBounds(config, zoom = config.tileLayer.maxZoom) {
-  const scale = Math.pow(2, zoom - config.tileLayer.maxZoom);
-  const horizontalPadding = 360 / scale;
-  const verticalPadding = 460 / scale;
-
-  return L.latLngBounds([
-    [-verticalPadding, -horizontalPadding],
-    [config.height + verticalPadding, config.width + horizontalPadding],
-  ]);
 }
 
 function makeFallbackGrid(w, h, fileName) {
