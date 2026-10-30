@@ -11,6 +11,11 @@ export const MAP_CONFIGS = {
     image: "maps/eidos7.png",
     altImages: ["maps/eidos-7.png"],
     width: 8194, height: 7809,
+    tileLayer: {
+      url: "maps/tiles_eidos7/{z}/{x}/{y}.png",
+      minZoom: 0,
+      maxZoom: 15,
+    },
   },
   xion: {
     id: "xion",

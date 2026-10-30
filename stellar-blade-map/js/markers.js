@@ -128,6 +128,9 @@ export function renderMarkers(state) {
       
     lMarker.bindPopup(popupHtml, {
       maxHeight: 340,
+      offset: [0, -8],
+      autoPan: true,
+      autoPanPadding: [20, 20],
       autoPanPaddingTopLeft: [20, 60],
       autoPanPaddingBottomRight: [20, 20]
     });
